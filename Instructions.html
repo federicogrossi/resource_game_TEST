@@ -1,0 +1,72 @@
+{{ block title }}
+    Instructions
+{{ endblock }}
+
+{{ block content }}
+<style>
+    .otree-timer {
+        display: none;
+    }
+</style>
+<script>
+    $(function () {
+        $('.otree-timer__time-left').on('update.countdown', function (event) {
+            if (event.offset.totalSeconds === 240) {
+                $('.otree-timer').show();
+            }
+        });
+    });
+</script>
+
+<p> Each participant in the group can choose to
+harvest from a stock of resource A each round. The initial stock of A is 50
+units, and each unit is worth {{ Constants.A_value }}.
+</p>
+
+<p> Choices are made individually but their total sum will affect the stock.  The stock of A is linked to a second
+stock of resource, called B, which you cannot harvest directly. For each harvested A-unit, a B-unit will also be
+    detracted from the stock of B. After every harvesting round, the two stocks grow again at given recovery rates.
+    Each B-unit regrown is worth {{ Constants.B_value }}.
+</p>
+
+<p> At the end of each round, the sum of all harvested A-units will be deducted from the two stocks and
+    each participant will be paid. The individual payoff is so constructed: {{ Constants.A_value }} * A-unit
+    individually harvested + {{ Constants.B_value }} * B-units regrown.
+</p>
+
+<p> Please look at the following image to familiarize with the stock levels and their respective growth rates (Remember:
+the image will also be displayed during each round).</p>
+
+<img src="{{ static 'resource_game/Resource.jpg' }}"/>
+
+<p> Example:
+P1 harvests 10 units, while P2 harvests 5, and P3 and P4 harvest 2 units each. Both stock go down to: 50 – (10 + 5 + 2 + 2)
+    = 31 units. Therefore their respective payoffs are so calculated:</p>
+
+<p>    P1 = 10*{{ Constants.A_value }} + 12*{{ Constants.B_value }} = 2.5 + 1.2 = 3.7 </p>
+<p>    P2 = 5*{{ Constants.A_value }} + 12*{{ Constants.B_value }} = 1.25 + 1.2 = 3.45 </p>
+<p>    P3 = 2*{{ Constants.A_value }} + 12*{{ Constants.B_value }} = 0.5 + 1.2 = 1.7 </p>
+<p>    P4 = 2*{{ Constants.A_value }} + 12*{{ Constants.B_value }} = 0.5 + 1.2 = 1.7 </p>
+
+
+<p>
+    If the stock goes below 20 units, the recovery rate falls. If the threshold (20 units) is crossed, the stock has
+    to reach a level of 25 units to move back to a high growth rate. If the total group harvest exceeds the available
+    A-stock at any time, the group loses and the game ends.
+</p>
+<p>
+    You have two minutes to make a choice about how much to harvest. If time finishes and you have not chosen, the
+    computer will automatically force you to leave the experiment.
+    </p>
+<p>
+    All choices remain anonymous. However, you can communicate with the rest of your group in the chat.
+</p>
+
+<p> The individual payoff for each round sums up and it is transformed into real currency. </p>
+
+
+    {{ formfield player.understanding }}
+
+    {{ next_button }}
+
+{{ endblock }}

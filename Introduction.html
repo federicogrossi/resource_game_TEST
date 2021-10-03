@@ -1,0 +1,30 @@
+{{ block title }}
+    Welcome to the "Resource Game"
+{{ endblock }}
+{{ block content }}
+<style>
+    .otree-timer {
+        display: none;
+    }
+</style>
+
+<script>
+    $(function () {
+        $('.otree-timer__time-left').on('update.countdown', function (event) {
+            if (event.offset.totalSeconds === 30) {
+                $('.otree-timer').show();
+            }
+        });
+    });
+</script>
+<p> In this study, you will be randomly assigned to a group of 4 participants. </p>
+<p> The experiment will last for an unknown number of rounds. </p>
+<p>
+The experiment is followed by a brief questionnaire after which you will be given a completion code no matter what
+    happens to the resources.
+</p>
+
+    {{ formfields }}
+    {{ next_button }}
+
+{{ endblock }}

@@ -1,0 +1,42 @@
+{{ block title }}
+    Harvest
+{{ endblock }}
+{{ block content }}
+
+    <p>    The A-stock is now composed of {{ group.A_new_stock }} units. </p>
+    <p>    The B-stock is now composed of {{ group.B_new_stock }} units. </p>
+    <p>    Remember that the resources are shared by all group members. Individual choices have an impact on the whole
+        group. </p>
+
+
+
+
+
+<style>
+    .otree-timer {
+        display: none;
+    }
+</style>
+
+<script>
+    $(function () {
+        $('.otree-timer__time-left').on('update.countdown', function (event) {
+            if (event.offset.totalSeconds === 30) {
+                $('.otree-timer').show();
+            }
+        });
+    });
+</script>
+
+
+
+    {{ formfields }}  {{ chat }}
+    {{ next_button }}
+
+<p> Instructions: </p>
+
+<img src="{{ static 'resource_game/Resource.jpg' }}"/>
+
+
+
+{{ endblock }}

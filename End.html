@@ -1,0 +1,21 @@
+{{ block title }}
+    The end
+{{ endblock }}
+
+{{ block content }}
+    {% if group.round_number == Constants.num_rounds %}
+        Congratulations! The group has sustainably managed the resources.
+        Your total payoff is {{ combined_payoff }}.
+        Press Next to go the questionnaire and to receive your completion code.
+        {% next_button %}
+    {% else %}
+        Sorry! The group has entirely depleted the stock.
+        Your total payoff is {{ combined_payoff }}.
+        Press Next to go the questionnaire and to receive your completion code.
+        {% next_button %}
+    {% endif %}
+
+
+{{ endblock }}
+
+
