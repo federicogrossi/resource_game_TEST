@@ -1,6 +1,5 @@
 from otree.api import *
-#is_dropout = models.BooleanField(initial=False)
-# Participant.mylist = ["is_dropout"]
+
 
 
 cu = Currency
@@ -25,6 +24,8 @@ class Subsession(BaseSubsession):
             subsession.group_randomly()
         else:
             subsession.group_like_round(1)
+        print("Round", subsession.round_number)
+        print("Matching", subsession.get_group_matrix())
 
         for player in subsession.get_players():
             participant = player.participant
@@ -32,48 +33,28 @@ class Subsession(BaseSubsession):
 
 
 class Group(BaseGroup):
-    total_harvest = models.IntegerField(
-       min=0,
-    )
+    total_harvest = models.IntegerField()
     A_stock_remained = models.IntegerField(
         min=0,
         max=50,
-        initial=50,
     )
     B_stock_remained = models.IntegerField(
         min=0,
         max=54,
-        initial=50,
     )
     A_growth_rate = models.IntegerField()
     B_growth_rate = models.IntegerField()
     A_new_stock = models.IntegerField(
         min=0,
         max=50,
-        initial=50,
     )
     B_new_stock = models.IntegerField(
         min=0,
         max=54,
-        initial=50,
     )
 
 
-# def set_payoffs(group: Group):
-#    players = group.get_players()
-#    harvests = [p.harvest for p in players]
-#    group.total_harvest = sum(harvests)
-#    for p in players:
-#        if group.total_harvest < group.A_stock_remained:
-#            p.payoff = p.harvest * Constants.A_value + group.B_growth_rate * Constants.B_value
-#        elif group.total_harvest >= group.A_stock_remained:
-#            p.payoff = ((p.harvest / group.total_harvest) * group.A_stock_remained) * Constants.A_value + group.B_growth_rate * Constants.B_value
-
-
-def stocks_new_and_remained(group: Group):   #  questo potrebbe essere spostato in player e group diventa player, # anche se i gruppi comunque cambiano
-    players = group.get_players()
-    harvests = [p.harvest for p in players]
-    group.total_harvest = sum(harvests)
+def stocks_new_and_remained(group: Group): #  questo potrebbe essere spostato in player e group diventa player, # anche se i gruppi comunque cambiano
     if group.round_number == 1:
         group.A_new_stock = 50
     else:
@@ -83,6 +64,11 @@ def stocks_new_and_remained(group: Group):   #  questo potrebbe essere spostato 
         group.B_new_stock = 50
     else:
         group.B_new_stock = group.in_round(group.round_number - 1).B_stock_remained + group.in_round(group.round_number - 1).B_growth_rate  # you can use "result" format (see Lesson 3)
+
+    if group.round_number == 1:
+        group.total_harvest = 0
+    else:
+        group.total_harvest += player.harvest   # HERE. How can I define here that the group total harvest is equal to the sum of each player's harvest in each round?
 
     if group.total_harvest >= group.A_new_stock:
         group.A_stock_remained = 0
@@ -145,16 +131,25 @@ def growth_rates(group: Group):
         group.B_growth_rate = 9
     elif group.B_stock_remained == range(45, 50):
         group.B_growth_rate = 5
-    elif group.B_stock_remained == 50:
+    elif group.B_stock_remained == 50:  # yes, change to include group.round_number == 1, put upwards
         group.B_growth_rate = 3
     elif group.B_stock_remained >= 51:
         group.B_growth_rate = 0
+
+    players = group.get_players()
+    harvests = [p.harvest for p in players]
+    group.total_harvest = sum(harvests)
+    for p in players:
+        if group.total_harvest < group.A_stock_remained:
+            p.payoff = p.harvest * Constants.A_value + group.B_growth_rate * Constants.B_value
+        elif group.total_harvest >= group.A_stock_remained:
+            p.payoff = ((p.harvest / group.total_harvest) * group.A_stock_remained) * Constants.A_value + group.B_growth_rate * Constants.B_value
 
 
 class Player(BasePlayer):
     harvest = models.IntegerField(
         min=0,
-        max=Group.A_new_stock,
+        max=50,
         label="How many A-units do you want to harvest?"
     )
     understanding = models.BooleanField(
@@ -170,21 +165,34 @@ class Player(BasePlayer):
     example = models.FloatField(
         label="If you harvest 5 units and the group harvests a total of 15 units, what is your payoff?"
     )
-    A_stock_remained = models.IntegerField(
-        min=0,
-        max=50,
-    )
-    B_stock_remained = models.IntegerField(
-        min=0,
-        max=54,
-    )
-    A_growth_rate = models.IntegerField()
-    B_growth_rate = models.IntegerField()
-    A_new_stock = models.IntegerField()
-    B_new_stock = models.IntegerField()
-
+#    A_stock_remained = models.IntegerField(
+#        min=0,
+#        max=50,
+#    )
+#    B_stock_remained = models.IntegerField(
+#        min=0,
+#        max=54,
+#    )
+#   A_growth_rate = models.IntegerField()
+#    B_growth_rate = models.IntegerField()
+#    A_new_stock = models.IntegerField()
+#    B_new_stock = models.IntegerField()
 
 # PAGES
+# class Grouping(WaitPage):
+#    group_by_arrival_time = True
+
+#    @staticmethod
+#    def after_all_players_arrive(group: Group):
+#        for p in group.get_players():
+#            participant = p.participant
+#            participant.past_group_id = group.id
+
+#    @staticmethod
+#    def is_displayed(group):
+#        return group.round_number == 1
+
+
 class Introduction(Page):
     @staticmethod
     def is_displayed(group):
@@ -204,11 +212,14 @@ class Instructions(Page):
     form_fields = ["understanding"]
 
 
+class Calculating(WaitPage):
+    after_all_players_arrive = stocks_new_and_remained
+
+
 class Harvest(Page):
     form_model = "player"
     form_fields = ["harvest"]
     timeout_seconds = 120  # https://otree.readthedocs.io/en/latest/multiplayer/waitpages.html?highlight=is_dropout
-    after_all_players_arrive = stocks_new_and_remained
 
     @staticmethod    # try to move this below vars_for_template
     def is_displayed(player: Player):
@@ -226,18 +237,6 @@ class ResultsWaitPage(WaitPage):  # do I have to put group = player.group?
 
 class Results(Page):  # check simple_game for set payoffs --> results-wait-page and result
     timeout_seconds = 30
-
-    @staticmethod
-    def vars_for_template(player: Player):
-        group = player.group
-        players = group.get_players()
-        harvests = [p.harvest for p in players]
-        group.total_harvest = sum(harvests)
-        for p in players:
-            if group.total_harvest < group.A_stock_remained:
-                p.payoff = p.harvest * Constants.A_value + group.B_growth_rate * Constants.B_value
-            elif group.total_harvest >= group.A_stock_remained:
-                p.payoff = ((p.harvest / group.total_harvest) * group.A_stock_remained) * Constants.A_value + group.B_growth_rate * Constants.B_value
 
 
 class End(Page):
@@ -257,5 +256,4 @@ class End(Page):
         return dict(combined_payoff=combined_payoff)  #  after this, the questionnaire, the completion code, and the final page
 
 
-
-page_sequence = [Introduction, Instructions, Harvest, ResultsWaitPage, Results, End]
+page_sequence = [Introduction, Instructions, Calculating, Harvest, ResultsWaitPage, Results, End]
